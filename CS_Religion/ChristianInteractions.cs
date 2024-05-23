@@ -59,7 +59,6 @@ namespace CS_Religion
             {
                 Exception(exception);
             }
-
             sSimInstantiatedListener = EventTracker.AddListener(EventTypeId.kSimInstantiated, new ProcessEventDelegate(OnSimInstantiated));
             sSimAgedUpListener = EventTracker.AddListener(EventTypeId.kSimAgeTransition, new ProcessEventDelegate(OnSimInstantiated));
             onTraitGainedListener = EventTracker.AddListener(EventTypeId.kTraitGained, OnTraitGained);
@@ -116,7 +115,7 @@ namespace CS_Religion
                 }
 
             }
-            catch (Exception exception)
+            catch(Exception exception)
             {
                 WriteLog(exception);
                 return;
@@ -146,7 +145,6 @@ namespace CS_Religion
                 return false;
             }
         }
-
         private sealed class Pray : Interaction<Sim, Sim>
         {
             public static readonly InteractionDefinition Singleton = new Definition();
