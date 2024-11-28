@@ -21,6 +21,7 @@ namespace CS_Religion
         public static bool IsChristian(Sim actor)
         {
             return actor.HasTrait((TraitNames)0xDB8CE8B9A70DD9FB);
+
         }
         [Tunable]
         protected static bool kInstantiator = false;
