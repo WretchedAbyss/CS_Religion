@@ -54,7 +54,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ChristianInteractions.cs" />
+    <Compile Include="CS_Religion.Buffs\BuffChristianShameMoodlet.cs" />
+    <Compile Include="CS_Religion\ChristianInteractions.cs" />
+    <Compile Include="CS_Religion\CS_Religion_Moodlet_Loader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -95,6 +97,7 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

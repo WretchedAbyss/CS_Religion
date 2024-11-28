@@ -1,25 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Sims3.Gameplay;
 using Sims3.Gameplay.Actors;
 using Sims3.Gameplay.Autonomy;
 using Sims3.Gameplay.EventSystem;
 using Sims3.Gameplay.Interactions;
 using Sims3.Gameplay.Pools;
 using Sims3.Gameplay.Utilities;
-using Sims3.Gameplay.CAS;
 using Sims3.SimIFace;
 using Sims3.UI;
 using Sims3.Gameplay.Interfaces;
-using Sims3.Gameplay.Abstracts;
 using Sims3.Gameplay.ActorSystems;
-using Sims3.Gameplay.ChildAndTeenUpdates;
-using Sims3.Gameplay.Core;
 using Sims3.Gameplay.Objects;
-using Sims3.Gameplay.Objects.CookingObjects;
-using Sims3.Gameplay.Socializing;
-using Sims3.SimIFace.Enums;
 
 namespace CS_Religion
 {
@@ -37,6 +27,7 @@ namespace CS_Religion
         private static EventListener sSimInstantiatedListener = null;
         private static EventListener sSimAgedUpListener = null;
         private static EventListener onTraitGainedListener = null;
+        private static EventListener onReadBibleListener = null;
 
         static ChistianInteractions()
         {
@@ -52,6 +43,20 @@ namespace CS_Religion
                     {
                         AddInteractions(sim);
                     }
+                }
+            }
+            catch (Exception exception)
+            {
+                Exception(exception);
+            }
+            try
+            {
+                foreach (Book book in Sims3.Gameplay.Queries.GetObjects<Book>())
+                {
+                    if (book != null)
+                    {
+                        AddInteractions(book);
+                    }
 
                 }
             }
@@ -62,7 +67,7 @@ namespace CS_Religion
             sSimInstantiatedListener = EventTracker.AddListener(EventTypeId.kSimInstantiated, new ProcessEventDelegate(OnSimInstantiated));
             sSimAgedUpListener = EventTracker.AddListener(EventTypeId.kSimAgeTransition, new ProcessEventDelegate(OnSimInstantiated));
             onTraitGainedListener = EventTracker.AddListener(EventTypeId.kTraitGained, OnTraitGained);
-
+            onReadBibleListener = EventTracker.AddListener(EventTypeId.kReadBook, OnReadBible);
         }
 
         protected static ListenerAction OnSimInstantiated(Event e)
@@ -98,6 +103,21 @@ namespace CS_Religion
             }
             return ListenerAction.Keep;
         }
+        private static ListenerAction OnReadBible(Event e)
+        {
+            Sim sim = e.Actor as Sim;
+            Book book = e.TargetObject as Book;
+            string bookname = book.Title;
+            if (sim != null && bookname == "The Holy Bible" && sim.IsInActiveHousehold)
+            {
+                StyledNotification.Show(new StyledNotification.Format("Verify Function Listener " + bookname,
+                            StyledNotification.NotificationStyle.kGameMessagePositive));
+
+                sim.SimDescription.TraitManager.AddHiddenElement((TraitNames)0xDB8CE8B9A70DD9FB);
+            }
+            
+            return ListenerAction.Keep;
+        }
         public static void AddInteractions(Sim sim)
         {
             try
@@ -115,7 +135,19 @@ namespace CS_Religion
                 }
 
             }
-            catch(Exception exception)
+            catch (Exception exception)
+            {
+                WriteLog(exception);
+                return;
+            }
+        }
+        public static void AddInteractions(Book book)
+        {
+            try
+            {
+                book.AddInteraction(ConvertFaith.Singleton, true);
+            }
+            catch (Exception exception)
             {
                 WriteLog(exception);
                 return;
@@ -199,5 +231,28 @@ namespace CS_Religion
 
             }
         }
+        private sealed class ConvertFaith : ImmediateInteraction<Sim, Book>
+        {
+            public static readonly InteractionDefinition Singleton = new Definition();
+            public override bool Run()
+            {
+                StyledNotification.Show(new StyledNotification.Format("Verify Function " + base.Target.Title,
+                            StyledNotification.NotificationStyle.kGameMessagePositive));
+                base.Actor.SimDescription.TraitManager.AddHiddenElement((TraitNames)0xDB8CE8B9A70DD9FB);
+                return true;
+            }
+            private sealed class Definition : ImmediateInteractionDefinition<Sim, Book, ConvertFaith>
+            {
+                public override string GetInteractionName(Sim a, Book target, InteractionObjectPair interaction)
+                {
+                    return "Convert Faith";
+                }
+                public override bool Test(Sim a, Book target, bool isAutonomous, ref GreyedOutTooltipCallback greyedOutTooltipCallback)
+                {
+                    return true;
+                }
+            }
+        }
     }
 }
+
