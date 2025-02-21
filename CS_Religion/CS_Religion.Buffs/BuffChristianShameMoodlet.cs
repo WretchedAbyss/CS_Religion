@@ -20,9 +20,6 @@ namespace CS_Religion.Buffs
         public override void OnAddition(BuffManager bm, BuffInstance bi, bool travelReaddition)
         {
             Sim actor = bm.Actor;
-            StyledNotification.Show(new StyledNotification.Format(
-                actor.Name + " received shame moodlet!",
-                StyledNotification.NotificationStyle.kGameMessagePositive));
             base.OnAddition(bm, bi, travelReaddition);
         }
 

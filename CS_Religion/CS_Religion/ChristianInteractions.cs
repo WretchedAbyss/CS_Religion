@@ -13,6 +13,7 @@ using Sims3.Gameplay.Objects;
 using CS_Religion.Buffs;
 using Sims3.Gameplay.Socializing;
 using Sims3.Gameplay.CAS;
+using.
 
 namespace CS_Religion
 {
@@ -21,6 +22,7 @@ namespace CS_Religion
     /// </summary>
     public class ChistianInteractions
     {
+
         public static bool IsChristian(Sim actor)
         {
             bool isChristian = actor.HasTrait((TraitNames)0xDB8CE8B9A70DD9FB);
@@ -63,7 +65,7 @@ namespace CS_Religion
         private static EventListener sSimAgedUpListener = null;
         private static EventListener onTraitGainedListener = null;
         private static EventListener onReadBibleListener = null;
-        private static EventListener onWoohooListenerHadFirstWoohoo = null;
+        // private static EventListener onWoohooListenerHadFirstWoohoo = null;
         private static EventListener onWoohooListenerWooHooed = null;
 
         static ChistianInteractions()
@@ -103,7 +105,7 @@ namespace CS_Religion
                 onReadBibleListener = EventTracker.AddListener(EventTypeId.kReadBook, OnReadBible);
 
                 // Add listeners for each WooHoo location
-                onWoohooListenerHadFirstWoohoo = EventTracker.AddListener(EventTypeId.kHadFirstWoohoo, OnWooHoo);
+                // onWoohooListenerHadFirstWoohoo = EventTracker.AddListener(EventTypeId.kHadFirstWoohoo, OnWooHoo);
                 onWoohooListenerWooHooed = EventTracker.AddListener(EventTypeId.kWooHooed, OnWooHoo);
 
                 StyledNotification.Show(new StyledNotification.Format("WooHoo listeners registered successfully!", StyledNotification.NotificationStyle.kGameMessagePositive));
@@ -173,16 +175,21 @@ namespace CS_Religion
                 StyledNotification.Show(new StyledNotification.Format(
             "Event ID = " + e.ToString() + ", Type = " + e.GetType().ToString(),
             StyledNotification.NotificationStyle.kDebugAlert));
-
-                SocialEvent socialEvent = e as SocialEvent;
+                // Handle base Sims 3 WooHooEvent
+                WooHooEvent wooHooEvent = e as WooHooEvent;
                 StyledNotification.Show(new StyledNotification.Format(
-            "SocialEvent is " + (socialEvent != null ? "valid" : "null"),
-            StyledNotification.NotificationStyle.kDebugAlert));
-                if (socialEvent != null)
+                    "WooHooEvent is " + (wooHooEvent != null ? "valid" : "null"),
+                    StyledNotification.NotificationStyle.kDebugAlert));
+
+                if (wooHooEvent != null)
                 {
-                    Sim actor = socialEvent.Actor as Sim;
-                    Sim target = socialEvent.TargetObject as Sim;
-                    StyledNotification.Show(new StyledNotification.Format("WooHoo event detected for " + (actor?.Name ?? "Unknown") + " and " + (target?.Name ?? "Unknown"),StyledNotification.NotificationStyle.kGameMessagePositive));
+                    Sim actor = wooHooEvent.Actor as Sim; // Adjust property name based on dnSpy
+                    Sim target = wooHooEvent.TargetObject as Sim; // Adjust property name based on dnSpy
+                    StyledNotification.Show(new StyledNotification.Format(
+                        "Actor is " + (actor != null ? actor.Name : "null") + ", Target is " + (target != null ? target.Name : "null"),
+                        StyledNotification.NotificationStyle.kDebugAlert));
+                    StyledNotification.Show(new StyledNotification.Format("WooHoo event detected for " + (actor?.Name ?? "Unknown") + " and " + (target?.Name ?? "Unknown"),
+                        StyledNotification.NotificationStyle.kGameMessagePositive));
                     if (actor != null && target != null)
                     {
                         // Check actor
@@ -203,6 +210,14 @@ namespace CS_Religion
                         }
                     }
                 }
+                else
+                {
+                    StyledNotification.Show(new StyledNotification.Format(
+                        "Unexpected event type for kWooHooed: Neither SocialEvent nor WooHooEvent",
+                        StyledNotification.NotificationStyle.kDebugAlert));
+                }
+
+
             }
             catch (Exception exception)
             {
