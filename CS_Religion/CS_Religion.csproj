@@ -56,7 +56,7 @@
   <ItemGroup>
     <Compile Include="CS_Religion.Buffs\BuffChristianShameMoodlet.cs" />
     <Compile Include="CS_Religion\ChristianInteractions.cs" />
-    <Compile Include="CS_Religion\CS_Religion_Moodlet_Loader.cs" />
+    <Compile Include="CS_Religion_Moodlet_Loader\CS_Religion_Moodlet_Loader.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

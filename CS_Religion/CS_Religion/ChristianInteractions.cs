@@ -10,6 +10,9 @@ using Sims3.UI;
 using Sims3.Gameplay.Interfaces;
 using Sims3.Gameplay.ActorSystems;
 using Sims3.Gameplay.Objects;
+using CS_Religion.Buffs;
+using Sims3.Gameplay.Socializing;
+using Sims3.Gameplay.CAS;
 
 namespace CS_Religion
 {
@@ -20,8 +23,39 @@ namespace CS_Religion
     {
         public static bool IsChristian(Sim actor)
         {
-            return actor.HasTrait((TraitNames)0xDB8CE8B9A70DD9FB);
+            bool isChristian = actor.HasTrait((TraitNames)0xDB8CE8B9A70DD9FB);
+            StyledNotification.Show(new StyledNotification.Format(
+                actor.Name + " is Christian: " + isChristian,
+                StyledNotification.NotificationStyle.kDebugAlert));
+            return isChristian;
+        }
 
+        private static bool AreMarried(Sim sim1, Sim sim2)
+        {
+            if (sim1 == null || sim2 == null)
+            {
+                StyledNotification.Show(new StyledNotification.Format(
+                    "AreMarried: One or both Sims are null",
+                    StyledNotification.NotificationStyle.kDebugAlert));
+                return false;
+            }
+
+            SimDescription desc1 = sim1.SimDescription;
+            SimDescription desc2 = sim2.SimDescription;
+
+            if (desc1 == null || desc2 == null)
+            {
+                StyledNotification.Show(new StyledNotification.Format(
+                    "AreMarried: One or both SimDescriptions are null",
+                    StyledNotification.NotificationStyle.kDebugAlert));
+                return false;
+            }
+
+            bool areMarried = desc1.Partner == desc2;
+            StyledNotification.Show(new StyledNotification.Format(
+                sim1.Name + " and " + sim2.Name + " are married: " + areMarried,
+                StyledNotification.NotificationStyle.kDebugAlert));
+            return areMarried;
         }
         [Tunable]
         protected static bool kInstantiator = false;
@@ -29,6 +63,8 @@ namespace CS_Religion
         private static EventListener sSimAgedUpListener = null;
         private static EventListener onTraitGainedListener = null;
         private static EventListener onReadBibleListener = null;
+        private static EventListener onWoohooListenerHadFirstWoohoo = null;
+        private static EventListener onWoohooListenerWooHooed = null;
 
         static ChistianInteractions()
         {
@@ -45,30 +81,37 @@ namespace CS_Religion
                         AddInteractions(sim);
                     }
                 }
-            }
-            catch (Exception exception)
-            {
-                Exception(exception);
-            }
-            try
-            {
-                foreach (Book book in Sims3.Gameplay.Queries.GetObjects<Book>())
+                try
                 {
-                    if (book != null)
+                    foreach (Book book in Sims3.Gameplay.Queries.GetObjects<Book>())
                     {
-                        AddInteractions(book);
+                        if (book != null)
+                        {
+                            AddInteractions(book);
+                        }
                     }
-
                 }
+                catch (Exception exception)
+                {
+                    Exception(exception);
+                }
+
+                // Add listeners for all WooHoo location-specific events
+                sSimInstantiatedListener = EventTracker.AddListener(EventTypeId.kSimInstantiated, new ProcessEventDelegate(OnSimInstantiated));
+                sSimAgedUpListener = EventTracker.AddListener(EventTypeId.kSimAgeTransition, new ProcessEventDelegate(OnSimInstantiated));
+                onTraitGainedListener = EventTracker.AddListener(EventTypeId.kTraitGained, OnTraitGained);
+                onReadBibleListener = EventTracker.AddListener(EventTypeId.kReadBook, OnReadBible);
+
+                // Add listeners for each WooHoo location
+                onWoohooListenerHadFirstWoohoo = EventTracker.AddListener(EventTypeId.kHadFirstWoohoo, OnWooHoo);
+                onWoohooListenerWooHooed = EventTracker.AddListener(EventTypeId.kWooHooed, OnWooHoo);
+
+                StyledNotification.Show(new StyledNotification.Format("WooHoo listeners registered successfully!", StyledNotification.NotificationStyle.kGameMessagePositive));
             }
             catch (Exception exception)
             {
                 Exception(exception);
             }
-            sSimInstantiatedListener = EventTracker.AddListener(EventTypeId.kSimInstantiated, new ProcessEventDelegate(OnSimInstantiated));
-            sSimAgedUpListener = EventTracker.AddListener(EventTypeId.kSimAgeTransition, new ProcessEventDelegate(OnSimInstantiated));
-            onTraitGainedListener = EventTracker.AddListener(EventTypeId.kTraitGained, OnTraitGained);
-            onReadBibleListener = EventTracker.AddListener(EventTypeId.kReadBook, OnReadBible);
         }
 
         protected static ListenerAction OnSimInstantiated(Event e)
@@ -116,7 +159,58 @@ namespace CS_Religion
 
                 sim.SimDescription.TraitManager.AddHiddenElement((TraitNames)0xDB8CE8B9A70DD9FB);
             }
-            
+
+            return ListenerAction.Keep;
+        }
+        private static ListenerAction OnWooHoo(Event e)
+        {
+            try
+            {
+                StyledNotification.Show(new StyledNotification.Format(
+    "Test Notification",
+    StyledNotification.NotificationStyle.kDebugAlert));
+
+                StyledNotification.Show(new StyledNotification.Format(
+            "Event ID = " + e.ToString() + ", Type = " + e.GetType().ToString(),
+            StyledNotification.NotificationStyle.kDebugAlert));
+
+                SocialEvent socialEvent = e as SocialEvent;
+                StyledNotification.Show(new StyledNotification.Format(
+            "SocialEvent is " + (socialEvent != null ? "valid" : "null"),
+            StyledNotification.NotificationStyle.kDebugAlert));
+                if (socialEvent != null)
+                {
+                    Sim actor = socialEvent.Actor as Sim;
+                    Sim target = socialEvent.TargetObject as Sim;
+                    StyledNotification.Show(new StyledNotification.Format("WooHoo event detected for " + (actor?.Name ?? "Unknown") + " and " + (target?.Name ?? "Unknown"),StyledNotification.NotificationStyle.kGameMessagePositive));
+                    if (actor != null && target != null)
+                    {
+                        // Check actor
+                        if (IsChristian(actor) && !AreMarried(actor, target))
+                        {
+                            actor.BuffManager.AddElement(BuffChristianShameMoodlet.StaticGuid, Origin.None);
+                            StyledNotification.Show(new StyledNotification.Format(
+                                actor.Name + " feels shame for WooHoo outside of marriage.",
+                                StyledNotification.NotificationStyle.kGameMessageNegative));
+                        }
+                        // Check target
+                        if (IsChristian(target) && !AreMarried(actor, target))
+                        {
+                            target.BuffManager.AddElement(BuffChristianShameMoodlet.StaticGuid, Origin.None);
+                            StyledNotification.Show(new StyledNotification.Format(
+                                target.Name + " feels shame for WooHoo outside of marriage.",
+                                StyledNotification.NotificationStyle.kGameMessageNegative));
+                        }
+                    }
+                }
+            }
+            catch (Exception exception)
+            {
+                StyledNotification.Show(new StyledNotification.Format(
+                    "Exception in OnWooHoo: " + exception.Message,
+                    StyledNotification.NotificationStyle.kDebugAlert));
+                Exception(exception);
+            }
             return ListenerAction.Keep;
         }
         public static void AddInteractions(Sim sim)
@@ -256,4 +350,3 @@ namespace CS_Religion
         }
     }
 }
-
